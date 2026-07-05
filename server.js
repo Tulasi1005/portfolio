@@ -37,20 +37,70 @@ app.post("/api/contact", async (req, res) => {
       replyTo: email,
       subject: `Portfolio Contact: ${subject}`,
       html: `
-        <div style="font-family:Arial,sans-serif;padding:20px">
-          <h2>New Portfolio Contact</h2>
+<div style="max-width:650px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden;font-family:Segoe UI,Arial,sans-serif;border:1px solid #e5e7eb">
 
-          <p><strong>Name:</strong> ${name}</p>
+  <div style="background:linear-gradient(135deg,#2563eb,#38bdf8);padding:30px;text-align:center;color:white">
+      <h1 style="margin:0;font-size:28px">📩 New Portfolio Enquiry</h1>
+      <p style="margin-top:8px;font-size:15px;opacity:.95">
+        Someone has contacted you from your portfolio website.
+      </p>
+  </div>
 
-          <p><strong>Email:</strong> ${email}</p>
+  <div style="padding:30px">
 
-          <p><strong>Subject:</strong> ${subject}</p>
+      <table style="width:100%;border-collapse:collapse">
+          <tr>
+              <td style="padding:12px;font-weight:bold;width:120px;background:#f8fafc">Name</td>
+              <td style="padding:12px">${name}</td>
+          </tr>
 
-          <hr>
+          <tr>
+              <td style="padding:12px;font-weight:bold;background:#f8fafc">Email</td>
+              <td style="padding:12px">
+                  <a href="mailto:${email}" style="color:#2563eb;text-decoration:none">
+                    ${email}
+                  </a>
+              </td>
+          </tr>
 
-          <p style="white-space:pre-wrap">${message}</p>
-        </div>
-      `,
+          <tr>
+              <td style="padding:12px;font-weight:bold;background:#f8fafc">Subject</td>
+              <td style="padding:12px">${subject}</td>
+          </tr>
+      </table>
+
+      <h3 style="margin-top:35px;color:#2563eb">
+          Message
+      </h3>
+
+      <div style="
+      background:#f8fafc;
+      padding:20px;
+      border-left:5px solid #2563eb;
+      border-radius:10px;
+      white-space:pre-wrap;
+      line-height:1.8">
+      ${message}
+      </div>
+
+  </div>
+
+  <div style="
+  background:#0f172a;
+  color:white;
+  padding:20px;
+  text-align:center">
+
+      <strong>M. Tulasi Laxmi Portfolio</strong>
+
+      <br><br>
+
+      This email was generated automatically from your portfolio contact form.
+
+  </div>
+
+</div>
+`
     });
 
     // Auto reply to visitor

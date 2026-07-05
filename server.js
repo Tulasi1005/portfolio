@@ -1,12 +1,13 @@
 import express from 'express';
 import cors from 'cors';
-import nodemailer from 'nodemailer';
+import { Resend } from "resend";
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Enable CORS and JSON parsing
 app.use(cors());
@@ -18,98 +19,77 @@ app.get('/api/health', (req, res) => {
 });
 
 // Contact Route
-app.post('/api/contact', async (req, res) => {
+app.post("/api/contact", async (req, res) => {
   const { name, email, subject, message } = req.body;
 
-  // Basic Validation
   if (!name || !email || !subject || !message) {
-    return res.status(400).json({ error: 'All fields (name, email, subject, message) are required.' });
+    return res.status(400).json({
+      success: false,
+      error: "All fields are required.",
+    });
   }
 
-  // Create Nodemailer Transporter
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-
-  // Setup email options
-  const mailOptions = {
-    from: `"${name}" <${process.env.SMTP_USER}>`, // Sending through your authenticated SMTP user
-    replyTo: email, // Replies will go directly to the visitor's email
-    to: process.env.CONTACT_RECEIVER,
-    subject: `Portfolio Contact: ${subject}`,
-    text: `You have received a new contact message from your portfolio:
-Name: ${name}
-Email: ${email}
-Subject: ${subject}
-
-Message:
-${message}`,
-    html: `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0;">
-        <h2 style="color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-top: 0; font-size: 20px;">
-          New Portfolio Submission
-        </h2>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-          <tr>
-            <td style="padding: 6px 0; font-weight: bold; width: 100px; color: #64748b; font-size: 14px;">Name:</td>
-            <td style="padding: 6px 0; font-size: 14px; font-weight: 600;">${name}</td>
-          </tr>
-          <tr>
-            <td style="padding: 6px 0; font-weight: bold; color: #64748b; font-size: 14px;">Email:</td>
-            <td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${email}" style="color: #38bdf8; text-decoration: none; font-weight: 600;">${email}</a></td>
-          </tr>
-          <tr>
-            <td style="padding: 6px 0; font-weight: bold; color: #64748b; font-size: 14px;">Subject:</td>
-            <td style="padding: 6px 0; font-size: 14px; font-weight: 600;">${subject}</td>
-          </tr>
-        </table>
-        <div style="background-color: #ffffff; padding: 20px; border-left: 4px solid #2563eb; border-radius: 6px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <h4 style="margin-top: 0; margin-bottom: 8px; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Message Payload</h4>
-          <p style="white-space: pre-wrap; margin: 0; font-size: 14px; line-height: 1.6; color: #334155;">${message}</p>
-        </div>
-        <p style="margin-top: 25px; margin-bottom: 0; font-size: 11px; color: #94a3b8; text-align: center;">
-          Sent from M. Tulasi Laxmi Portfolio Contact Form
-        </p>
-      </div>
-    `,
-  };
-
-  if (email) {
-  await transporter.sendMail({
-    from: process.env.SMTP_USER,
-    to: email,
-    subject: "Thanks for contacting me!",
-    html: `
-      <h2>Hello ${name},</h2>
-
-      <p>Thank you for reaching out.</p>
-
-      <p>I have received your message regarding:</p>
-
-      <b>${subject}</b>
-
-      <p>I will get back to you within 24 hours.</p>
-
-      <br>
-
-      Regards,<br>
-      M. Tulasi Laxmi
-    `
-  });
-}
-
   try {
-    // Send email
-    await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully from: ${email} -> ${process.env.CONTACT_RECEIVER}`);
-    return res.status(200).json({ success: true, message: 'Message sent successfully.' });
-  } catch (error) {
-    console.error('Nodemailer SMTP Error:', error);
-    return res.status(500).json({ error: 'Failed to send message. Please ensure SMTP credentials are correct.' });
+    // Email to you
+    await resend.emails.send({
+      from: "Portfolio <onboarding@resend.dev>",
+      to: process.env.CONTACT_RECEIVER,
+      replyTo: email,
+      subject: `Portfolio Contact: ${subject}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;padding:20px">
+          <h2>New Portfolio Contact</h2>
+
+          <p><strong>Name:</strong> ${name}</p>
+
+          <p><strong>Email:</strong> ${email}</p>
+
+          <p><strong>Subject:</strong> ${subject}</p>
+
+          <hr>
+
+          <p style="white-space:pre-wrap">${message}</p>
+        </div>
+      `,
+    });
+
+    // Auto reply to visitor
+    await resend.emails.send({
+      from: "M. Tulasi Laxmi <onboarding@resend.dev>",
+      to: email,
+      subject: "Thank you for contacting me!",
+      html: `
+        <div style="font-family:Arial,sans-serif;padding:20px">
+          <h2>Hello ${name}, 👋</h2>
+
+          <p>Thank you for contacting me.</p>
+
+          <p>I have received your message regarding:</p>
+
+          <p><strong>${subject}</strong></p>
+
+          <p>I will get back to you within <strong>24 hours</strong>.</p>
+
+          <br>
+
+          <p>Regards,</p>
+          <h3>M. Tulasi Laxmi</h3>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Message sent successfully.",
+    });
+
+  } catch (err) {
+    console.error("Resend Error:", err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
   }
 });
 

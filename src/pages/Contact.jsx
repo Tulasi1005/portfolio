@@ -40,7 +40,7 @@ export default function Contact() {
   setError("");
 
   try {
-    const response = await fetch(`https://tulasi-portfolio.onrender.com/api/contact`, {
+    const response = await fetch(`${API_URL}/api/contact`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
